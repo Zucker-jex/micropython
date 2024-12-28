@@ -1,0 +1,15 @@
+{
+    "deploy": [
+        "../deploy.md"
+    ],
+    "docs": "",
+    "features": [],
+    "images": [
+        "zlib_h723zg.jpg"
+    ],
+    "mcu": "stm32h7",
+    "product": "ZLIB H723ZG",
+    "thumbnail": "",
+    "url": "https://blog.zuckertech.cn/",
+    "vendor": "Zucker Techtech"
+}

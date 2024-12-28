@@ -250,17 +250,21 @@ void HAL_MMC_MspDeInit(MMC_HandleTypeDef *hsd) {
 }
 #endif
 
+//bool sdcard_is_present(void) {
+//    if MICROPY_HW_ENABLE_MMCARD
+//    if (pyb_sdmmc_flags & PYB_SDMMC_FLAG_MMC) {
+//        return false;
+//    }
+//    endif
+//    if defined(MICROPY_HW_SDCARD_DETECT_PIN)
+//    return mp_hal_pin_read(MICROPY_HW_SDCARD_DETECT_PIN) == MICROPY_HW_SDCARD_DETECT_PRESENT;
+//    else
+//    return true;
+//    endif
+//}
+
 bool sdcard_is_present(void) {
-    #if MICROPY_HW_ENABLE_MMCARD
-    if (pyb_sdmmc_flags & PYB_SDMMC_FLAG_MMC) {
-        return false;
-    }
-    #endif
-    #if defined(MICROPY_HW_SDCARD_DETECT_PIN)
-    return mp_hal_pin_read(MICROPY_HW_SDCARD_DETECT_PIN) == MICROPY_HW_SDCARD_DETECT_PRESENT;
-    #else
     return true;
-    #endif
 }
 
 #if MICROPY_HW_ENABLE_SDCARD
