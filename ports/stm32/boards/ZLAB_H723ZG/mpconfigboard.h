@@ -1,4 +1,4 @@
-#define MICROPY_HW_BOARD_NAME               "ZLIB_H723ZG"
+#define MICROPY_HW_BOARD_NAME               "ZLAB_H723ZG"
 #define MICROPY_HW_MCU_NAME                 "STM32H723ZGT6"
 
 #define MICROPY_HW_ENABLE_RTC               (1)
@@ -10,7 +10,8 @@
 #define MICROPY_HW_HAS_SWITCH               (0)
 #define MICROPY_HW_HAS_FLASH                (1)
 
-#define MICROPY_BOARD_EARLY_INIT            ZLIB_H723ZG_board_early_init
+#define MICROPY_BOARD_EARLY_INIT            ZLAB_H723ZG_board_early_init
+void ZLAB_H723ZG_board_early_init(void);
 
 // There is no external HS crystal, instead it comes from ST-LINK MCO output which is 8MHz.
 // The following gives a 550MHz CPU speed.
@@ -119,8 +120,8 @@
 #define MICROPY_HW_USB_HS                   (1)
 #define MICROPY_HW_USB_HS_IN_FS             (1)
 //#define MICROPY_HW_USB_MAIN_DEV             (USB_PHY_FS_ID)
-//#define MICROPY_HW_USB_VBUS_DETECT_PIN      (pin_A9)
-//#define MICROPY_HW_USB_OTG_ID_PIN           (pin_A10)
+#define MICROPY_HW_USB_VBUS_DETECT_PIN      (pin_A9)
+#define MICROPY_HW_USB_OTG_ID_PIN           (pin_A10)
 
 // FDCAN bus
 //#define MICROPY_HW_CAN1_NAME                "FDCAN1"
@@ -143,4 +144,28 @@
 //#define MICROPY_HW_ETH_RMII_TXD0            (pin_G13)
 //#define MICROPY_HW_ETH_RMII_TXD1            (pin_B13)
 
-void ZLIB_H723ZG_board_early_init(void);
+// Use external SPI flash for storage
+#define MICROPY_HW_SPIFLASH_ENABLE_CACHE         (1)
+#define MICROPY_HW_SPIFLASH_SOFT_RESET           (1)
+#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (0)
+
+// QSPI Flash 64MBits
+#if !MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
+#define MICROPY_HW_QSPI_PRESCALER           (2) // 100MHz
+#define MICROPY_HW_SPIFLASH_SIZE_BITS   (128 * 1024 * 1024)
+#define MICROPY_HW_QSPIFLASH_SIZE_BITS_LOG2 (27)
+#define MICROPY_HW_QSPIFLASH_CS         (pin_G6)
+#define MICROPY_HW_QSPIFLASH_SCK        (pin_F10)
+#define MICROPY_HW_QSPIFLASH_IO0        (pin_F8)
+#define MICROPY_HW_QSPIFLASH_IO1        (pin_F9)
+#define MICROPY_HW_QSPIFLASH_IO2        (pin_F7)
+#define MICROPY_HW_QSPIFLASH_IO3        (pin_F6)
+
+// SPI flash #1, block device config
+extern const struct _mp_spiflash_config_t spiflash_config;
+extern struct _spi_bdev_t spi_bdev;
+#define MICROPY_HW_BDEV_SPIFLASH    (&spi_bdev)
+#define MICROPY_HW_BDEV_SPIFLASH_CONFIG (&spiflash_config)
+#define MICROPY_HW_BDEV_SPIFLASH_SIZE_BYTES (MICROPY_HW_SPIFLASH_SIZE_BITS / 8)
+#define MICROPY_HW_BDEV_SPIFLASH_EXTENDED (&spi_bdev)
+#endif
