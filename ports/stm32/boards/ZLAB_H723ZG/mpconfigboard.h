@@ -149,17 +149,18 @@ void ZLAB_H723ZG_board_early_init(void);
 #define MICROPY_HW_SPIFLASH_SOFT_RESET           (1)
 #define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (1)
 
-// QSPI Flash 64MBits
+// SPI Flash 64MBits
 #if !MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
-#define MICROPY_HW_QSPI_PRESCALER           (2) // 100MHz
+#define MICROPY_MODULE_BUILTIN_INIT        (1)
+#define MICROPY_HW_SPI_PRESCALER           (2) // 100MHz
+#define MICROPY_HW_SPIFLASH_SIZE_BITS_LOG2 (27)
 #define MICROPY_HW_SPIFLASH_SIZE_BITS   (128 * 1024 * 1024)
-#define MICROPY_HW_QSPIFLASH_SIZE_BITS_LOG2 (27)
-#define MICROPY_HW_QSPIFLASH_CS         (pin_G6)
-#define MICROPY_HW_QSPIFLASH_SCK        (pin_F10)
-#define MICROPY_HW_QSPIFLASH_IO0        (pin_F8)
-#define MICROPY_HW_QSPIFLASH_IO1        (pin_F9)
-#define MICROPY_HW_QSPIFLASH_IO2        (pin_F7)
-#define MICROPY_HW_QSPIFLASH_IO3        (pin_F6)
+#define MICROPY_HW_SPIFLASH_CS         (pin_G6)
+#define MICROPY_HW_SPIFLASH_SCK        (pin_F10)
+#define MICROPY_HW_SPIFLASH_IO0        (pin_F8)
+#define MICROPY_HW_SPIFLASH_IO1        (pin_F9)
+#define MICROPY_HW_SPIFLASH_IO2        (pin_F7)
+#define MICROPY_HW_SPIFLASH_IO3        (pin_F6)
 
 // SPI flash #1, block device config
 extern const struct _mp_spiflash_config_t spiflash_config;
@@ -169,3 +170,7 @@ extern struct _spi_bdev_t spi_bdev;
 #define MICROPY_HW_BDEV_SPIFLASH_SIZE_BYTES (MICROPY_HW_SPIFLASH_SIZE_BITS / 8)
 #define MICROPY_HW_BDEV_SPIFLASH_EXTENDED (&spi_bdev)
 #endif
+
+// #define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (0)
+// #define MICROPY_HW_ENABLE_EXTERNAL_SRAM_STORAGE  (1)
+// #define MICROPY_HW_EXTERNAL_SRAM_SIZE            (1 * 1024 * 1024) // 1MB

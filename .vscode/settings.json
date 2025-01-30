@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.bac": "bat",
+        "storage.h": "c"
+    }
+}
