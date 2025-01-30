@@ -147,7 +147,7 @@ void ZLAB_H723ZG_board_early_init(void);
 // Use external SPI flash for storage
 #define MICROPY_HW_SPIFLASH_ENABLE_CACHE         (1)
 #define MICROPY_HW_SPIFLASH_SOFT_RESET           (1)
-#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (0)
+#define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE (1)
 
 // QSPI Flash 64MBits
 #if !MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE
