@@ -7,7 +7,7 @@
 #define MICROPY_HW_ENABLE_DAC               (1)
 #define MICROPY_HW_ENABLE_USB               (1)
 #define MICROPY_HW_ENABLE_SDCARD            (1)
-#define MICROPY_HW_HAS_SWITCH               (0)
+#define MICROPY_HW_HAS_SWITCH               (1)
 #define MICROPY_HW_HAS_FLASH                (1)
 
 #define MICROPY_BOARD_EARLY_INIT            ZLAB_H723ZG_board_early_init
@@ -103,11 +103,11 @@ void ZLAB_H723ZG_board_early_init(void);
 //#define MICROPY_HW_SPI3_MISO                (pin_B4)
 //#define MICROPY_HW_SPI3_MOSI                (pin_B5)
 
-// USRSW is pulled low. Pressing the button makes the input go high.
-//#define MICROPY_HW_USRSW_PIN                (pin_C13)
-//#define MICROPY_HW_USRSW_PULL               (GPIO_NOPULL)
-//#define MICROPY_HW_USRSW_EXTI_MODE          (GPIO_MODE_IT_RISING)
-//#define MICROPY_HW_USRSW_PRESSED            (1)
+// USRSW is pulled high. Pressing the button makes the input go low.
+#define MICROPY_HW_USRSW_PIN                (pin_G15)
+#define MICROPY_HW_USRSW_PULL               (GPIO_PULLUP)
+#define MICROPY_HW_USRSW_EXTI_MODE          (GPIO_MODE_IT_FALLING)
+#define MICROPY_HW_USRSW_PRESSED            (0)
 
 // LEDs
 #define MICROPY_HW_LED1                     (pin_G8)
