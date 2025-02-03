@@ -184,12 +184,13 @@ static inline bool mp_obj_is_small_int(mp_const_obj_t o) {
 #define MP_OBJ_NEW_SMALL_INT(small_int) ((mp_obj_t)((((mp_uint_t)(small_int)) << 1) | 1))
 
 #if MICROPY_PY_BUILTINS_FLOAT
-#define mp_const_float_e MP_ROM_PTR((mp_obj_t)(((0x402df854 & ~3) | 2) + 0x80800000))
-#define mp_const_float_pi MP_ROM_PTR((mp_obj_t)(((0x40490fdb & ~3) | 2) + 0x80800000))
+#define MP_OBJ_NEW_CONST_FLOAT(f) MP_ROM_PTR((mp_obj_t)((((((uint64_t)f) & ~3) | 2) + 0x80800000) & 0xffffffff))
+#define mp_const_float_e  MP_OBJ_NEW_CONST_FLOAT(0x402df854)
+#define mp_const_float_pi MP_OBJ_NEW_CONST_FLOAT(0x40490fdb)
 #if MICROPY_PY_MATH_CONSTANTS
-#define mp_const_float_tau MP_ROM_PTR((mp_obj_t)(((0x40c90fdb & ~3) | 2) + 0x80800000))
-#define mp_const_float_inf MP_ROM_PTR((mp_obj_t)(((0x7f800000 & ~3) | 2) + 0x80800000))
-#define mp_const_float_nan MP_ROM_PTR((mp_obj_t)(((0xffc00000 & ~3) | 2) + 0x80800000))
+#define mp_const_float_tau MP_OBJ_NEW_CONST_FLOAT(0x40c90fdb)
+#define mp_const_float_inf MP_OBJ_NEW_CONST_FLOAT(0x7f800000)
+#define mp_const_float_nan MP_OBJ_NEW_CONST_FLOAT(0xffc00000)
 #endif
 
 static inline bool mp_obj_is_float(mp_const_obj_t o) {
@@ -202,7 +203,7 @@ static inline mp_float_t mp_obj_float_get(mp_const_obj_t o) {
     union {
         mp_float_t f;
         mp_uint_t u;
-    } num = {.u = ((mp_uint_t)o - 0x80800000) & ~3};
+    } num = {.u = ((mp_uint_t)o - 0x80800000u) & ~3u};
     return num.f;
 }
 static inline mp_obj_t mp_obj_new_float(mp_float_t f) {
@@ -210,7 +211,7 @@ static inline mp_obj_t mp_obj_new_float(mp_float_t f) {
         mp_float_t f;
         mp_uint_t u;
     } num = {.f = f};
-    return (mp_obj_t)(((num.u & ~0x3) | 2) + 0x80800000);
+    return (mp_obj_t)(((num.u & ~0x3u) | 2u) + 0x80800000u);
 }
 #endif
 
@@ -369,52 +370,52 @@ typedef struct _mp_rom_obj_t { mp_const_obj_t o; } mp_rom_obj_t;
 #define MP_OBJ_FUN_MAKE_SIG(n_args_min, n_args_max, takes_kw) ((uint32_t)((((uint32_t)(n_args_min)) << 17) | (((uint32_t)(n_args_max)) << 1) | ((takes_kw) ? 1 : 0)))
 
 #define MP_DEFINE_CONST_FUN_OBJ_0(obj_name, fun_name) \
-    const mp_obj_fun_builtin_fixed_t obj_name = \
-    {{&mp_type_fun_builtin_0}, .fun._0 = fun_name}
+        const mp_obj_fun_builtin_fixed_t obj_name = \
+        {{&mp_type_fun_builtin_0}, .fun._0 = fun_name}
 #define MP_DEFINE_CONST_FUN_OBJ_1(obj_name, fun_name) \
-    const mp_obj_fun_builtin_fixed_t obj_name = \
-    {{&mp_type_fun_builtin_1}, .fun._1 = fun_name}
+        const mp_obj_fun_builtin_fixed_t obj_name = \
+        {{&mp_type_fun_builtin_1}, .fun._1 = fun_name}
 #define MP_DEFINE_CONST_FUN_OBJ_2(obj_name, fun_name) \
-    const mp_obj_fun_builtin_fixed_t obj_name = \
-    {{&mp_type_fun_builtin_2}, .fun._2 = fun_name}
+        const mp_obj_fun_builtin_fixed_t obj_name = \
+        {{&mp_type_fun_builtin_2}, .fun._2 = fun_name}
 #define MP_DEFINE_CONST_FUN_OBJ_3(obj_name, fun_name) \
-    const mp_obj_fun_builtin_fixed_t obj_name = \
-    {{&mp_type_fun_builtin_3}, .fun._3 = fun_name}
+        const mp_obj_fun_builtin_fixed_t obj_name = \
+        {{&mp_type_fun_builtin_3}, .fun._3 = fun_name}
 #define MP_DEFINE_CONST_FUN_OBJ_VAR(obj_name, n_args_min, fun_name) \
-    const mp_obj_fun_builtin_var_t obj_name = \
-    {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(n_args_min, MP_OBJ_FUN_ARGS_MAX, false), .fun.var = fun_name}
+        const mp_obj_fun_builtin_var_t obj_name = \
+        {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(n_args_min, MP_OBJ_FUN_ARGS_MAX, false), .fun.var = fun_name}
 #define MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(obj_name, n_args_min, n_args_max, fun_name) \
-    const mp_obj_fun_builtin_var_t obj_name = \
-    {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(n_args_min, n_args_max, false), .fun.var = fun_name}
+        const mp_obj_fun_builtin_var_t obj_name = \
+        {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(n_args_min, n_args_max, false), .fun.var = fun_name}
 #define MP_DEFINE_CONST_FUN_OBJ_KW(obj_name, n_args_min, fun_name) \
-    const mp_obj_fun_builtin_var_t obj_name = \
-    {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(n_args_min, MP_OBJ_FUN_ARGS_MAX, true), .fun.kw = fun_name}
+        const mp_obj_fun_builtin_var_t obj_name = \
+        {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(n_args_min, MP_OBJ_FUN_ARGS_MAX, true), .fun.kw = fun_name}
 
 // These macros are used to define constant map/dict objects
 // You can put "static" in front of the definition to make it local
 
 #define MP_DEFINE_CONST_MAP(map_name, table_name) \
-    const mp_map_t map_name = { \
-        .all_keys_are_qstrs = 1, \
-        .is_fixed = 1, \
-        .is_ordered = 1, \
-        .used = MP_ARRAY_SIZE(table_name), \
-        .alloc = MP_ARRAY_SIZE(table_name), \
-        .table = (mp_map_elem_t *)(mp_rom_map_elem_t *)table_name, \
-    }
-
-#define MP_DEFINE_CONST_DICT_WITH_SIZE(dict_name, table_name, n) \
-    const mp_obj_dict_t dict_name = { \
-        .base = {&mp_type_dict}, \
-        .map = { \
+        const mp_map_t map_name = { \
             .all_keys_are_qstrs = 1, \
             .is_fixed = 1, \
             .is_ordered = 1, \
-            .used = n, \
-            .alloc = n, \
+            .used = MP_ARRAY_SIZE(table_name), \
+            .alloc = MP_ARRAY_SIZE(table_name), \
             .table = (mp_map_elem_t *)(mp_rom_map_elem_t *)table_name, \
-        }, \
-    }
+        }
+
+#define MP_DEFINE_CONST_DICT_WITH_SIZE(dict_name, table_name, n) \
+        const mp_obj_dict_t dict_name = { \
+            .base = {&mp_type_dict}, \
+            .map = { \
+                .all_keys_are_qstrs = 1, \
+                .is_fixed = 1, \
+                .is_ordered = 1, \
+                .used = n, \
+                .alloc = n, \
+                .table = (mp_map_elem_t *)(mp_rom_map_elem_t *)table_name, \
+            }, \
+        }
 
 #define MP_DEFINE_CONST_DICT(dict_name, table_name) MP_DEFINE_CONST_DICT_WITH_SIZE(dict_name, table_name, MP_ARRAY_SIZE(table_name))
 
@@ -1269,13 +1270,13 @@ mp_obj_t mp_seq_extract_slice(const mp_obj_t *seq, mp_bound_slice_t *indexes);
 
 // Note: dest and slice regions may overlap
 #define mp_seq_replace_slice_no_grow(dest, dest_len, beg, end, slice, slice_len, item_sz) \
-    memmove(((char *)dest) + (beg) * (item_sz), slice, slice_len * (item_sz)); \
-    memmove(((char *)dest) + (beg + slice_len) * (item_sz), ((char *)dest) + (end) * (item_sz), (dest_len - end) * (item_sz));
+        memmove(((char *)dest) + (beg) * (item_sz), slice, slice_len * (item_sz)); \
+        memmove(((char *)dest) + (beg + slice_len) * (item_sz), ((char *)dest) + (end) * (item_sz), (dest_len - end) * (item_sz));
 
 // Note: dest and slice regions may overlap
 #define mp_seq_replace_slice_grow_inplace(dest, dest_len, beg, end, slice, slice_len, len_adj, item_sz) \
-    memmove(((char *)dest) + (beg + slice_len) * (item_sz), ((char *)dest) + (end) * (item_sz), ((dest_len) + (len_adj) - ((beg) + (slice_len))) * (item_sz)); \
-    memmove(((char *)dest) + (beg) * (item_sz), slice, slice_len * (item_sz));
+        memmove(((char *)dest) + (beg + slice_len) * (item_sz), ((char *)dest) + (end) * (item_sz), ((dest_len) + (len_adj) - ((beg) + (slice_len))) * (item_sz)); \
+        memmove(((char *)dest) + (beg) * (item_sz), slice, slice_len * (item_sz));
 
 #if !MICROPY_PREVIEW_VERSION_2
 

@@ -109,7 +109,7 @@ typedef struct _mp_emit_method_table_id_ops_t {
 
 typedef struct _emit_method_table_t {
     #if MICROPY_DYNAMIC_COMPILER
-    emit_t *(*emit_new)(mp_emit_common_t * emit_common, mp_obj_t *error_slot, uint *label_slot, mp_uint_t max_num_labels);
+    emit_t *(*emit_new)(mp_emit_common_t *emit_common, mp_obj_t *error_slot, uint *label_slot, mp_uint_t max_num_labels);
     void (*emit_free)(emit_t *emit);
     #endif
 
@@ -307,12 +307,15 @@ typedef struct _emit_inline_asm_method_table_t {
     void (*op)(emit_inline_asm_t *emit, qstr op, mp_uint_t n_args, mp_parse_node_t *pn_args);
 } emit_inline_asm_method_table_t;
 
+extern const emit_inline_asm_method_table_t emit_inline_rv32_method_table;
 extern const emit_inline_asm_method_table_t emit_inline_thumb_method_table;
 extern const emit_inline_asm_method_table_t emit_inline_xtensa_method_table;
 
+emit_inline_asm_t *emit_inline_rv32_new(mp_uint_t max_num_labels);
 emit_inline_asm_t *emit_inline_thumb_new(mp_uint_t max_num_labels);
 emit_inline_asm_t *emit_inline_xtensa_new(mp_uint_t max_num_labels);
 
+void emit_inline_rv32_free(emit_inline_asm_t *emit);
 void emit_inline_thumb_free(emit_inline_asm_t *emit);
 void emit_inline_xtensa_free(emit_inline_asm_t *emit);
 

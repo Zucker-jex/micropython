@@ -44,9 +44,9 @@
 // os.uname().release. All other version info available in the firmware (e.g.
 // the REPL banner) comes from MICROPY_GIT_TAG.
 #define MICROPY_VERSION_STRING_BASE \
-    MP_STRINGIFY(MICROPY_VERSION_MAJOR) "." \
-    MP_STRINGIFY(MICROPY_VERSION_MINOR) "." \
-    MP_STRINGIFY(MICROPY_VERSION_MICRO)
+        MP_STRINGIFY(MICROPY_VERSION_MAJOR) "." \
+        MP_STRINGIFY(MICROPY_VERSION_MINOR) "." \
+        MP_STRINGIFY(MICROPY_VERSION_MICRO)
 #if MICROPY_VERSION_PRERELEASE
 #define MICROPY_VERSION_STRING MICROPY_VERSION_STRING_BASE "-preview"
 #else
@@ -411,6 +411,11 @@
 #define MICROPY_EMIT_RV32 (0)
 #endif
 
+// Whether to enable the RISC-V RV32 inline assembler
+#ifndef MICROPY_EMIT_INLINE_RV32
+#define MICROPY_EMIT_INLINE_RV32 (0)
+#endif
+
 // Convenience definition for whether any native emitter is enabled
 #define MICROPY_EMIT_NATIVE (MICROPY_EMIT_X64 || MICROPY_EMIT_X86 || MICROPY_EMIT_THUMB || MICROPY_EMIT_ARM || MICROPY_EMIT_XTENSA || MICROPY_EMIT_XTENSAWIN || MICROPY_EMIT_RV32 || MICROPY_EMIT_NATIVE_DEBUG)
 
@@ -420,7 +425,7 @@
 #define MICROPY_EMIT_NATIVE_PRELUDE_SEPARATE_FROM_MACHINE_CODE (MICROPY_EMIT_XTENSAWIN)
 
 // Convenience definition for whether any inline assembler emitter is enabled
-#define MICROPY_EMIT_INLINE_ASM (MICROPY_EMIT_INLINE_THUMB || MICROPY_EMIT_INLINE_XTENSA)
+#define MICROPY_EMIT_INLINE_ASM (MICROPY_EMIT_INLINE_THUMB || MICROPY_EMIT_INLINE_XTENSA || MICROPY_EMIT_INLINE_RV32)
 
 // Convenience definition for whether any native or inline assembler emitter is enabled
 #define MICROPY_EMIT_MACHINE_CODE (MICROPY_EMIT_NATIVE || MICROPY_EMIT_INLINE_ASM)
