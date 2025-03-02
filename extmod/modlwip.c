@@ -476,7 +476,7 @@ static void _lwip_tcp_err_unaccepted(void *arg, err_t err) {
     // because it's only ever used by lwIP if tcp_connect is called on the TCP PCB.
     lwip_socket_obj_t *socket = (lwip_socket_obj_t *)pcb->connected;
 
-    // Array is not volatile because thiss callback is executed within the lwIP context
+    // Array is not volatile because this callback is executed within the lwIP context
     uint8_t alloc = socket->incoming.connection.alloc;
     struct tcp_pcb **tcp_array = (struct tcp_pcb **)lwip_socket_incoming_array(socket);
 
@@ -677,20 +677,20 @@ static mp_uint_t lwip_raw_udp_receive(lwip_socket_obj_t *socket, byte *buf, mp_u
 
 // For use in stream virtual methods
 #define STREAM_ERROR_CHECK(socket) \
-        if (socket->state < 0) { \
-            *_errno = error_lookup_table[-socket->state]; \
-            return MP_STREAM_ERROR; \
-        } \
-        assert(socket->pcb.tcp);
+    if (socket->state < 0) { \
+        *_errno = error_lookup_table[-socket->state]; \
+        return MP_STREAM_ERROR; \
+    } \
+    assert(socket->pcb.tcp);
 
 // Version of above for use when lock is held
 #define STREAM_ERROR_CHECK_WITH_LOCK(socket) \
-        if (socket->state < 0) { \
-            *_errno = error_lookup_table[-socket->state]; \
-            MICROPY_PY_LWIP_EXIT \
-            return MP_STREAM_ERROR; \
-        } \
-        assert(socket->pcb.tcp);
+    if (socket->state < 0) { \
+        *_errno = error_lookup_table[-socket->state]; \
+        MICROPY_PY_LWIP_EXIT \
+        return MP_STREAM_ERROR; \
+    } \
+    assert(socket->pcb.tcp);
 
 
 // Helper function for send/sendto to handle TCP packets

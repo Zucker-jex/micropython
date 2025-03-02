@@ -87,19 +87,26 @@ void mp_hal_pin_input(mp_hal_pin_obj_t pin);
 void mp_hal_pin_output(mp_hal_pin_obj_t pin);
 void mp_hal_pin_open_drain(mp_hal_pin_obj_t pin);
 #define mp_hal_pin_od_low(p) do { \
-            if ((p) == 16) { WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & ~1) | 1); } \
-            else { gpio_output_set(0, 1 << (p), 1 << (p), 0); } \
+        if ((p) == 16) { WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & ~1) | 1); } \
+        else { gpio_output_set(0, 1 << (p), 1 << (p), 0); } \
 } while (0)
 #define mp_hal_pin_od_high(p) do { \
-            if ((p) == 16) { WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & ~1)); } \
-            else { gpio_output_set(0, 0, 0, 1 << (p)); /* set as input to avoid glitches */ } \
+        if ((p) == 16) { WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & ~1)); } \
+        else { gpio_output_set(0, 0, 0, 1 << (p)); /* set as input to avoid glitches */ } \
 } while (0)
 // The DHT driver requires using the open-drain feature of the GPIO to get it to work reliably
 #define mp_hal_pin_od_high_dht(p) do { \
-            if ((p) == 16) { WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & ~1)); } \
-            else { gpio_output_set(1 << (p), 0, 1 << (p), 0); } \
+        if ((p) == 16) { WRITE_PERI_REG(RTC_GPIO_ENABLE, (READ_PERI_REG(RTC_GPIO_ENABLE) & ~1)); } \
+        else { gpio_output_set(1 << (p), 0, 1 << (p), 0); } \
 } while (0)
 #define mp_hal_pin_read(p) pin_get(p)
+static inline int mp_hal_pin_read_output(mp_hal_pin_obj_t pin) {
+    if (pin >= 16) {
+        return READ_PERI_REG(RTC_GPIO_OUT) & 1;
+    } else {
+        return (GPIO_REG_READ(GPIO_OUT_ADDRESS) >> pin) & 1;
+    }
+}
 #define mp_hal_pin_write(p, v) pin_set((p), (v))
 
 void *ets_get_esf_buf_ctlblk(void);

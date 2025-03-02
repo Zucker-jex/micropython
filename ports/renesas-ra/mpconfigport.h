@@ -199,14 +199,14 @@
 
 #if MICROPY_PY_MACHINE
 #define MACHINE_BUILTIN_MODULE_CONSTANTS \
-        { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) },
+    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) },
 #else
 #define MACHINE_BUILTIN_MODULE_CONSTANTS
 #endif
 
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
-        MACHINE_BUILTIN_MODULE_CONSTANTS \
+    MACHINE_BUILTIN_MODULE_CONSTANTS \
 
 #define MP_STATE_PORT MP_STATE_VM
 
@@ -222,8 +222,8 @@ extern const struct _mp_obj_type_t mod_network_esp_hosted_type;
 #endif
 
 #define MICROPY_PORT_NETWORK_INTERFACES \
-        MICROPY_HW_NIC_ESP_HOSTED \
-            MICROPY_BOARD_NETWORK_INTERFACES \
+    MICROPY_HW_NIC_ESP_HOSTED \
+    MICROPY_BOARD_NETWORK_INTERFACES \
 
 // Miscellaneous settings
 
@@ -252,26 +252,26 @@ typedef long mp_off_t;
 
 #if MICROPY_PY_THREAD
 #define MICROPY_EVENT_POLL_HOOK \
-        do { \
-            extern void mp_handle_pending(bool); \
-            mp_handle_pending(true); \
-            if (pyb_thread_enabled) { \
-                MP_THREAD_GIL_EXIT(); \
-                pyb_thread_yield(); \
-                MP_THREAD_GIL_ENTER(); \
-            } else { \
-                __WFI(); \
-            } \
-        } while (0);
+    do { \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+        if (pyb_thread_enabled) { \
+            MP_THREAD_GIL_EXIT(); \
+            pyb_thread_yield(); \
+            MP_THREAD_GIL_ENTER(); \
+        } else { \
+            __WFI(); \
+        } \
+    } while (0);
 
 #define MICROPY_THREAD_YIELD() pyb_thread_yield()
 #else
 #define MICROPY_EVENT_POLL_HOOK \
-        do { \
-            extern void mp_handle_pending(bool); \
-            mp_handle_pending(true); \
-            __WFI(); \
-        } while (0);
+    do { \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+        __WFI(); \
+    } while (0);
 
 #define MICROPY_THREAD_YIELD()
 #endif

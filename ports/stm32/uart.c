@@ -177,65 +177,65 @@ bool uart_exists(int uart_id) {
         return false;
     }
     switch (uart_id) {
-    #if defined(MICROPY_HW_UART1_TX) && defined(MICROPY_HW_UART1_RX)
+        #if defined(MICROPY_HW_UART1_TX) && defined(MICROPY_HW_UART1_RX)
         case PYB_UART_1:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART2_TX) && defined(MICROPY_HW_UART2_RX)
+        #if defined(MICROPY_HW_UART2_TX) && defined(MICROPY_HW_UART2_RX)
         case PYB_UART_2:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART3_TX) && defined(MICROPY_HW_UART3_RX)
+        #if defined(MICROPY_HW_UART3_TX) && defined(MICROPY_HW_UART3_RX)
         case PYB_UART_3:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART4_TX) && defined(MICROPY_HW_UART4_RX)
+        #if defined(MICROPY_HW_UART4_TX) && defined(MICROPY_HW_UART4_RX)
         case PYB_UART_4:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART5_TX) && defined(MICROPY_HW_UART5_RX)
+        #if defined(MICROPY_HW_UART5_TX) && defined(MICROPY_HW_UART5_RX)
         case PYB_UART_5:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART6_TX) && defined(MICROPY_HW_UART6_RX)
+        #if defined(MICROPY_HW_UART6_TX) && defined(MICROPY_HW_UART6_RX)
         case PYB_UART_6:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART7_TX) && defined(MICROPY_HW_UART7_RX)
+        #if defined(MICROPY_HW_UART7_TX) && defined(MICROPY_HW_UART7_RX)
         case PYB_UART_7:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART8_TX) && defined(MICROPY_HW_UART8_RX)
+        #if defined(MICROPY_HW_UART8_TX) && defined(MICROPY_HW_UART8_RX)
         case PYB_UART_8:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART9_TX) && defined(MICROPY_HW_UART9_RX)
+        #if defined(MICROPY_HW_UART9_TX) && defined(MICROPY_HW_UART9_RX)
         case PYB_UART_9:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART10_TX) && defined(MICROPY_HW_UART10_RX)
+        #if defined(MICROPY_HW_UART10_TX) && defined(MICROPY_HW_UART10_RX)
         case PYB_UART_10:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_LPUART1_TX) && defined(MICROPY_HW_LPUART1_RX)
+        #if defined(MICROPY_HW_LPUART1_TX) && defined(MICROPY_HW_LPUART1_RX)
         case PYB_LPUART_1:
             return true;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_LPUART2_TX) && defined(MICROPY_HW_LPUART2_RX)
+        #if defined(MICROPY_HW_LPUART2_TX) && defined(MICROPY_HW_LPUART2_RX)
         case PYB_LPUART_2:
             return true;
-    #endif
+        #endif
 
         default:
             return false;
@@ -256,7 +256,7 @@ bool uart_init(machine_uart_obj_t *uart_obj,
     uint32_t pins_pull[4] = { GPIO_NOPULL, GPIO_PULLUP, GPIO_NOPULL, GPIO_PULLUP };
 
     switch (uart_obj->uart_id) {
-    #if defined(MICROPY_HW_UART1_TX) && defined(MICROPY_HW_UART1_RX)
+        #if defined(MICROPY_HW_UART1_TX) && defined(MICROPY_HW_UART1_RX)
         case PYB_UART_1:
             uart_unit = 1;
             UARTx = USART1;
@@ -281,9 +281,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             #endif
             __HAL_RCC_USART1_CLK_ENABLE();
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART2_TX) && defined(MICROPY_HW_UART2_RX)
+        #if defined(MICROPY_HW_UART2_TX) && defined(MICROPY_HW_UART2_RX)
         case PYB_UART_2:
             uart_unit = 2;
             UARTx = USART2;
@@ -312,9 +312,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             #endif
             __HAL_RCC_USART2_CLK_ENABLE();
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART3_TX) && defined(MICROPY_HW_UART3_RX)
+        #if defined(MICROPY_HW_UART3_TX) && defined(MICROPY_HW_UART3_RX)
         case PYB_UART_3:
             uart_unit = 3;
             UARTx = USART3;
@@ -345,9 +345,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             #endif
             __HAL_RCC_USART3_CLK_ENABLE();
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART4_TX) && defined(MICROPY_HW_UART4_RX)
+        #if defined(MICROPY_HW_UART4_TX) && defined(MICROPY_HW_UART4_RX)
         case PYB_UART_4:
             uart_unit = 4;
             #if defined(STM32F0)
@@ -386,9 +386,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             pins_pull[3] = MICROPY_HW_UART4_CTS_PULL;
             #endif
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART5_TX) && defined(MICROPY_HW_UART5_RX)
+        #if defined(MICROPY_HW_UART5_TX) && defined(MICROPY_HW_UART5_RX)
         case PYB_UART_5:
             uart_unit = 5;
             #if defined(STM32F0)
@@ -427,9 +427,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             pins_pull[3] = MICROPY_HW_UART5_CTS_PULL;
             #endif
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART6_TX) && defined(MICROPY_HW_UART6_RX)
+        #if defined(MICROPY_HW_UART6_TX) && defined(MICROPY_HW_UART6_RX)
         case PYB_UART_6:
             uart_unit = 6;
             UARTx = USART6;
@@ -460,9 +460,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             #endif
             __HAL_RCC_USART6_CLK_ENABLE();
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART7_TX) && defined(MICROPY_HW_UART7_RX)
+        #if defined(MICROPY_HW_UART7_TX) && defined(MICROPY_HW_UART7_RX)
         case PYB_UART_7:
             uart_unit = 7;
             #if defined(STM32F0)
@@ -493,9 +493,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             pins_pull[3] = MICROPY_HW_UART7_CTS_PULL;
             #endif
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART8_TX) && defined(MICROPY_HW_UART8_RX)
+        #if defined(MICROPY_HW_UART8_TX) && defined(MICROPY_HW_UART8_RX)
         case PYB_UART_8:
             uart_unit = 8;
             #if defined(STM32F0)
@@ -526,9 +526,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             pins_pull[3] = MICROPY_HW_UART8_CTS_PULL;
             #endif
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART9_TX) && defined(MICROPY_HW_UART9_RX)
+        #if defined(MICROPY_HW_UART9_TX) && defined(MICROPY_HW_UART9_RX)
         case PYB_UART_9:
             uart_unit = 9;
             UARTx = UART9;
@@ -540,9 +540,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             pins_pull[1] = MICROPY_HW_UART9_RX_PULL;
             #endif
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_UART10_TX) && defined(MICROPY_HW_UART10_RX)
+        #if defined(MICROPY_HW_UART10_TX) && defined(MICROPY_HW_UART10_RX)
         case PYB_UART_10:
             uart_unit = 10;
             #if defined(UART10)
@@ -560,9 +560,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             pins_pull[1] = MICROPY_HW_UART10_RX_PULL;
             #endif
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_LPUART1_TX) && defined(MICROPY_HW_LPUART1_RX)
+        #if defined(MICROPY_HW_LPUART1_TX) && defined(MICROPY_HW_LPUART1_RX)
         case PYB_LPUART_1:
             uart_fn = AF_FN_LPUART;
             uart_unit = 1;
@@ -592,9 +592,9 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             #endif
             __HAL_RCC_LPUART1_CLK_ENABLE();
             break;
-    #endif
+        #endif
 
-    #if defined(MICROPY_HW_LPUART2_TX) && defined(MICROPY_HW_LPUART2_RX)
+        #if defined(MICROPY_HW_LPUART2_TX) && defined(MICROPY_HW_LPUART2_RX)
         case PYB_LPUART_2:
             uart_fn = AF_FN_LPUART;
             uart_unit = 2;
@@ -622,7 +622,7 @@ bool uart_init(machine_uart_obj_t *uart_obj,
             #endif
             __HAL_RCC_LPUART2_CLK_ENABLE();
             break;
-    #endif
+        #endif
 
         default:
             // UART does not exist or is not configured for this board

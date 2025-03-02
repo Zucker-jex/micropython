@@ -44,9 +44,9 @@
 // os.uname().release. All other version info available in the firmware (e.g.
 // the REPL banner) comes from MICROPY_GIT_TAG.
 #define MICROPY_VERSION_STRING_BASE \
-        MP_STRINGIFY(MICROPY_VERSION_MAJOR) "." \
-        MP_STRINGIFY(MICROPY_VERSION_MINOR) "." \
-        MP_STRINGIFY(MICROPY_VERSION_MICRO)
+    MP_STRINGIFY(MICROPY_VERSION_MAJOR) "." \
+    MP_STRINGIFY(MICROPY_VERSION_MINOR) "." \
+    MP_STRINGIFY(MICROPY_VERSION_MICRO)
 #if MICROPY_VERSION_PRERELEASE
 #define MICROPY_VERSION_STRING MICROPY_VERSION_STRING_BASE "-preview"
 #else
@@ -340,6 +340,11 @@
 // Whether to support saving persistent code to a file via mp_raw_code_save_file
 #ifndef MICROPY_PERSISTENT_CODE_SAVE_FILE
 #define MICROPY_PERSISTENT_CODE_SAVE_FILE (0)
+#endif
+
+// Whether to support converting functions to persistent code (bytes)
+#ifndef MICROPY_PERSISTENT_CODE_SAVE_FUN
+#define MICROPY_PERSISTENT_CODE_SAVE_FUN (MICROPY_PY_MARSHAL)
 #endif
 
 // Whether generated code can persist independently of the VM/runtime instance
@@ -1041,6 +1046,11 @@ typedef double mp_float_t;
 #define MICROPY_PY_FUNCTION_ATTRS (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EXTRA_FEATURES)
 #endif
 
+// Whether to implement the __code__ attribute on functions, and function constructor
+#ifndef MICROPY_PY_FUNCTION_ATTRS_CODE
+#define MICROPY_PY_FUNCTION_ATTRS_CODE (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_FULL_FEATURES)
+#endif
+
 // Whether to support the descriptors __get__, __set__, __delete__
 // This costs some code size and makes load/store/delete of instance
 // attributes slower for the classes that use this feature
@@ -1127,6 +1137,15 @@ typedef double mp_float_t;
 // Whether to support bytearray object
 #ifndef MICROPY_PY_BUILTINS_BYTEARRAY
 #define MICROPY_PY_BUILTINS_BYTEARRAY (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_CORE_FEATURES)
+#endif
+
+// Whether to support code objects, and how many features they have
+#define MICROPY_PY_BUILTINS_CODE_NONE       (0)
+#define MICROPY_PY_BUILTINS_CODE_MINIMUM    (1)
+#define MICROPY_PY_BUILTINS_CODE_BASIC      (2)
+#define MICROPY_PY_BUILTINS_CODE_FULL       (3)
+#ifndef MICROPY_PY_BUILTINS_CODE
+#define MICROPY_PY_BUILTINS_CODE            (MICROPY_PY_SYS_SETTRACE ? MICROPY_PY_BUILTINS_CODE_FULL : (MICROPY_PY_FUNCTION_ATTRS_CODE ? MICROPY_PY_BUILTINS_CODE_BASIC : (MICROPY_PY_BUILTINS_COMPILE ? MICROPY_PY_BUILTINS_CODE_MINIMUM : MICROPY_PY_BUILTINS_CODE_NONE)))
 #endif
 
 // Whether to support dict.fromkeys() class method
@@ -1361,6 +1380,11 @@ typedef double mp_float_t;
 // Whether to provide the _asdict function for namedtuple
 #ifndef MICROPY_PY_COLLECTIONS_NAMEDTUPLE__ASDICT
 #define MICROPY_PY_COLLECTIONS_NAMEDTUPLE__ASDICT (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EVERYTHING)
+#endif
+
+// Whether to provide "marshal" module
+#ifndef MICROPY_PY_MARSHAL
+#define MICROPY_PY_MARSHAL (MICROPY_CONFIG_ROM_LEVEL_AT_LEAST_EVERYTHING)
 #endif
 
 // Whether to provide "math" module
@@ -1627,6 +1651,11 @@ typedef double mp_float_t;
 // Set this to 0 to disable the divisor.
 #ifndef MICROPY_PY_THREAD_GIL_VM_DIVISOR
 #define MICROPY_PY_THREAD_GIL_VM_DIVISOR (32)
+#endif
+
+// Is a recursive mutex type in use?
+#ifndef MICROPY_PY_THREAD_RECURSIVE_MUTEX
+#define MICROPY_PY_THREAD_RECURSIVE_MUTEX (MICROPY_PY_THREAD && !MICROPY_PY_THREAD_GIL)
 #endif
 
 // Extended modules

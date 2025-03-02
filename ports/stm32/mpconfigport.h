@@ -146,14 +146,22 @@
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (HAL_RCC_GetSysClockFreq() / 48)
 #define MICROPY_PY_WEBSOCKET        (MICROPY_PY_LWIP)
 #define MICROPY_PY_WEBREPL          (MICROPY_PY_LWIP)
-#ifndef MICROPY_PY_SOCKET
-#define MICROPY_PY_SOCKET           (1)
-#endif
 #ifndef MICROPY_PY_NETWORK
 #define MICROPY_PY_NETWORK          (1)
 #endif
 #ifndef MICROPY_PY_ONEWIRE
 #define MICROPY_PY_ONEWIRE          (1)
+#endif
+
+// optional network features
+#if MICROPY_PY_NETWORK
+#ifndef MICROPY_PY_SOCKET
+#define MICROPY_PY_SOCKET           (1)
+#endif
+
+#ifndef MICROPY_PY_NETWORK_PPP_LWIP
+#define MICROPY_PY_NETWORK_PPP_LWIP     (0)
+#endif
 #endif
 
 // fatfs configuration used in ffconf.h
@@ -166,7 +174,7 @@
 #if MICROPY_PY_PYB
 extern const struct _mp_obj_module_t pyb_module;
 #define PYB_BUILTIN_MODULE_CONSTANTS \
-        { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) },
+    { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) },
 #else
 #define PYB_BUILTIN_MODULE_CONSTANTS
 #endif
@@ -174,14 +182,14 @@ extern const struct _mp_obj_module_t pyb_module;
 #if MICROPY_PY_STM
 extern const struct _mp_obj_module_t stm_module;
 #define STM_BUILTIN_MODULE_CONSTANTS \
-        { MP_ROM_QSTR(MP_QSTR_stm), MP_ROM_PTR(&stm_module) },
+    { MP_ROM_QSTR(MP_QSTR_stm), MP_ROM_PTR(&stm_module) },
 #else
 #define STM_BUILTIN_MODULE_CONSTANTS
 #endif
 
 #if MICROPY_PY_MACHINE
 #define MACHINE_BUILTIN_MODULE_CONSTANTS \
-        { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) },
+    { MP_ROM_QSTR(MP_QSTR_machine), MP_ROM_PTR(&mp_module_machine) },
 #else
 #define MACHINE_BUILTIN_MODULE_CONSTANTS
 #endif
@@ -209,19 +217,19 @@ extern const struct _mp_obj_type_t mod_network_nic_type_wiznet5k;
 
 // extra constants
 #define MICROPY_PORT_CONSTANTS \
-        MACHINE_BUILTIN_MODULE_CONSTANTS \
-        PYB_BUILTIN_MODULE_CONSTANTS \
-            STM_BUILTIN_MODULE_CONSTANTS \
+    MACHINE_BUILTIN_MODULE_CONSTANTS \
+    PYB_BUILTIN_MODULE_CONSTANTS \
+    STM_BUILTIN_MODULE_CONSTANTS \
 
 #ifndef MICROPY_BOARD_NETWORK_INTERFACES
 #define MICROPY_BOARD_NETWORK_INTERFACES
 #endif
 
 #define MICROPY_PORT_NETWORK_INTERFACES \
-        MICROPY_HW_NIC_ETH  \
-        MICROPY_HW_NIC_CYW43 \
-        MICROPY_HW_NIC_WIZNET5K \
-        MICROPY_BOARD_NETWORK_INTERFACES \
+    MICROPY_HW_NIC_ETH  \
+    MICROPY_HW_NIC_CYW43 \
+    MICROPY_HW_NIC_WIZNET5K \
+    MICROPY_BOARD_NETWORK_INTERFACES \
 
 #define MP_STATE_PORT MP_STATE_VM
 
@@ -243,26 +251,26 @@ typedef long mp_off_t;
 
 #if MICROPY_PY_THREAD
 #define MICROPY_EVENT_POLL_HOOK \
-        do { \
-            extern void mp_handle_pending(bool); \
-            mp_handle_pending(true); \
-            if (pyb_thread_enabled) { \
-                MP_THREAD_GIL_EXIT(); \
-                pyb_thread_yield(); \
-                MP_THREAD_GIL_ENTER(); \
-            } else { \
-                __WFI(); \
-            } \
-        } while (0);
+    do { \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+        if (pyb_thread_enabled) { \
+            MP_THREAD_GIL_EXIT(); \
+            pyb_thread_yield(); \
+            MP_THREAD_GIL_ENTER(); \
+        } else { \
+            __WFI(); \
+        } \
+    } while (0);
 
 #define MICROPY_THREAD_YIELD() pyb_thread_yield()
 #else
 #define MICROPY_EVENT_POLL_HOOK \
-        do { \
-            extern void mp_handle_pending(bool); \
-            mp_handle_pending(true); \
-            __WFI(); \
-        } while (0);
+    do { \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+        __WFI(); \
+    } while (0);
 
 #define MICROPY_THREAD_YIELD()
 #endif

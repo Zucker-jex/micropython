@@ -89,14 +89,14 @@ uint cyw43_get_pin_wl(cyw43_pin_index_t pin_id);
 #endif
 
 #define CYW43_SDPCM_SEND_COMMON_WAIT \
-        if (get_core_num() == 0) { \
-            cyw43_yield(); \
-        } \
+    if (get_core_num() == 0) { \
+        cyw43_yield(); \
+    } \
 
 #define CYW43_DO_IOCTL_WAIT \
-        if (get_core_num() == 0) { \
-            cyw43_yield(); \
-        } \
+    if (get_core_num() == 0) { \
+        cyw43_yield(); \
+    } \
 
 #define CYW43_ARRAY_SIZE(a)             MP_ARRAY_SIZE(a)
 

@@ -132,8 +132,8 @@ static const sdspi_device_config_t spi_dev_defaults[2] = {
 };
 
 #define SET_CONFIG_PIN(config, pin_var, arg_id) \
-        if (arg_vals[arg_id].u_obj != mp_const_none) \
-        config.pin_var = machine_pin_get_id(arg_vals[arg_id].u_obj)
+    if (arg_vals[arg_id].u_obj != mp_const_none) \
+    config.pin_var = machine_pin_get_id(arg_vals[arg_id].u_obj)
 
 static esp_err_t sdcard_ensure_card_init(sdcard_card_obj_t *self, bool force) {
     if (force || !(self->flags & SDCARD_CARD_FLAGS_CARD_INIT_DONE)) {
@@ -364,7 +364,7 @@ static mp_obj_t machine_sdcard_readblocks(mp_obj_t self_in, mp_obj_t block_num, 
 
     err = sdcard_ensure_card_init((sdcard_card_obj_t *)self, false);
     if (err != ESP_OK) {
-        return false;
+        return mp_const_false;
     }
 
     mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_WRITE);
@@ -381,7 +381,7 @@ static mp_obj_t machine_sdcard_writeblocks(mp_obj_t self_in, mp_obj_t block_num,
 
     err = sdcard_ensure_card_init((sdcard_card_obj_t *)self, false);
     if (err != ESP_OK) {
-        return false;
+        return mp_const_false;
     }
 
     mp_get_buffer_raise(buf, &bufinfo, MP_BUFFER_READ);
