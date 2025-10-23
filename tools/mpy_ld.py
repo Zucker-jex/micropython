@@ -30,6 +30,7 @@ Link .o files to .mpy
 
 import sys, os, struct, re
 from elftools.elf import elffile
+import ar_util
 
 sys.path.append(os.path.dirname(__file__) + "/../py")
 import makeqstrdata as qstrutil
@@ -401,6 +402,7 @@ class LinkEnv:
         self.known_syms = {}  # dict of symbols that are defined
         self.unresolved_syms = []  # list of unresolved symbols
         self.mpy_relocs = []  # list of relocations needed in the output .mpy file
+        self.externs = {}  # dict of externally-defined symbols
 
     def check_arch(self, arch_name):
         if arch_name != self.arch.name:
@@ -490,10 +492,14 @@ def populate_got(env):
         sym = got_entry.sym
         if hasattr(sym, "resolved"):
             sym = sym.resolved
-        sec = sym.section
-        addr = sym["st_value"]
-        got_entry.sec_name = sec.name
-        got_entry.link_addr += sec.addr + addr
+        if sym.name in env.externs:
+            got_entry.sec_name = ".external.fixed_addr"
+            got_entry.link_addr = env.externs[sym.name]
+        else:
+            sec = sym.section
+            addr = sym["st_value"]
+            got_entry.sec_name = sec.name
+            got_entry.link_addr += sec.addr + addr
 
     # Get sorted GOT, sorted by external, text, rodata, bss so relocations can be combined
     got_list = sorted(
@@ -519,6 +525,9 @@ def populate_got(env):
             dest = int(got_entry.name.split("+")[1], 16) // env.arch.word_size
         elif got_entry.sec_name == ".external.mp_fun_table":
             dest = got_entry.sym.mp_fun_table_offset
+        elif got_entry.sec_name == ".external.fixed_addr":
+            # Fixed-address symbols should not be relocated.
+            continue
         elif got_entry.sec_name.startswith(".text"):
             dest = ".text"
         elif got_entry.sec_name.startswith(".rodata"):
@@ -664,7 +673,7 @@ def do_relocation_text(env, text_addr, r):
         R_XTENSA_PDIFF32,
         R_XTENSA_ASM_EXPAND,
     ):
-        if s.section.name.startswith(".text"):
+        if not hasattr(s, "section") or s.section.name.startswith(".text"):
             # it looks like R_XTENSA_[P]DIFF32 into .text is already correctly relocated,
             # and expand relaxations cannot occur in non-executable sections.
             return
@@ -701,9 +710,14 @@ def do_relocation_text(env, text_addr, r):
     elif env.arch.name == "EM_RISCV":
         (addr, value) = process_riscv32_relocation(env, text_addr, r)
 
+    elif env.arch.name == "EM_ARM" and r_info_type == R_ARM_ABS32:
+        # Absolute relocation, handled as a data relocation.
+        do_relocation_data(env, text_addr, r)
+        return
+
     else:
         # Unknown/unsupported relocation
-        assert 0, r_info_type
+        assert 0, (r_info_type, s.name, s.entry, env.arch.name)
 
     # Write relocation
     if env.arch.name == "EM_RISCV":
@@ -768,9 +782,9 @@ def do_relocation_data(env, text_addr, r):
     ):
         # Relocation in data.rel.ro to internal/external symbol
         if env.arch.word_size == 4:
-            struct_type = "<I"
+            struct_type = "<i"
         elif env.arch.word_size == 8:
-            struct_type = "<Q"
+            struct_type = "<q"
         if hasattr(s, "resolved"):
             s = s.resolved
         sec = s.section
@@ -1075,59 +1089,59 @@ def process_riscv32_relocation(env, text_addr, r):
     return addr, value
 
 
-def load_object_file(env, felf):
-    with open(felf, "rb") as f:
-        elf = elffile.ELFFile(f)
-        env.check_arch(elf["e_machine"])
+def load_object_file(env, f, felf):
+    elf = elffile.ELFFile(f)
+    env.check_arch(elf["e_machine"])
 
-        # Get symbol table
-        symtab = list(elf.get_section_by_name(".symtab").iter_symbols())
+    # Get symbol table
+    symtab = list(elf.get_section_by_name(".symtab").iter_symbols())
 
-        # Load needed sections from ELF file
-        sections_shndx = {}  # maps elf shndx to Section object
-        for idx, s in enumerate(elf.iter_sections()):
-            if s.header.sh_type in ("SHT_PROGBITS", "SHT_NOBITS"):
-                if s.data_size == 0:
-                    # Ignore empty sections
-                    pass
-                elif s.name.startswith((".literal", ".text", ".rodata", ".data.rel.ro", ".bss")):
-                    sec = Section.from_elfsec(s, felf)
-                    sections_shndx[idx] = sec
-                    if s.name.startswith(".literal"):
-                        env.literal_sections.append(sec)
-                    else:
-                        env.sections.append(sec)
-                elif s.name.startswith(".data"):
-                    raise LinkError("{}: {} non-empty".format(felf, s.name))
+    # Load needed sections from ELF file
+    sections_shndx = {}  # maps elf shndx to Section object
+    for idx, s in enumerate(elf.iter_sections()):
+        if s.header.sh_type in ("SHT_PROGBITS", "SHT_NOBITS"):
+            if s.data_size == 0:
+                # Ignore empty sections
+                pass
+            elif s.name.startswith((".literal", ".text", ".rodata", ".data.rel.ro", ".bss")):
+                sec = Section.from_elfsec(s, felf)
+                sections_shndx[idx] = sec
+                if s.name.startswith(".literal"):
+                    env.literal_sections.append(sec)
                 else:
-                    # Ignore section
-                    pass
-            elif s.header.sh_type in ("SHT_REL", "SHT_RELA"):
-                shndx = s.header.sh_info
-                if shndx in sections_shndx:
-                    sec = sections_shndx[shndx]
-                    sec.reloc_name = s.name
-                    sec.reloc = list(s.iter_relocations())
-                    for r in sec.reloc:
-                        r.sym = symtab[r["r_info_sym"]]
-
-        # Link symbols to their sections, and update known and unresolved symbols
-        for sym in symtab:
-            sym.filename = felf
-            shndx = sym.entry["st_shndx"]
+                    env.sections.append(sec)
+            elif s.name.startswith(".data"):
+                raise LinkError("{}: {} non-empty".format(felf, s.name))
+            else:
+                # Ignore section
+                pass
+        elif s.header.sh_type in ("SHT_REL", "SHT_RELA"):
+            shndx = s.header.sh_info
             if shndx in sections_shndx:
-                # Symbol with associated section
-                sym.section = sections_shndx[shndx]
-                if sym["st_info"]["bind"] in ("STB_GLOBAL", "STB_WEAK"):
-                    # Defined global symbol
-                    if sym.name in env.known_syms and not sym.name.startswith(
-                        "__x86.get_pc_thunk."
-                    ):
-                        raise LinkError("duplicate symbol: {}".format(sym.name))
-                    env.known_syms[sym.name] = sym
-            elif sym.entry["st_shndx"] == "SHN_UNDEF" and sym["st_info"]["bind"] == "STB_GLOBAL":
-                # Undefined global symbol, needs resolving
-                env.unresolved_syms.append(sym)
+                sec = sections_shndx[shndx]
+                sec.reloc_name = s.name
+                sec.reloc = list(s.iter_relocations())
+                for r in sec.reloc:
+                    r.sym = symtab[r["r_info_sym"]]
+
+    # Link symbols to their sections, and update known and unresolved symbols
+    dup_errors = []
+    for sym in symtab:
+        sym.filename = felf
+        shndx = sym.entry["st_shndx"]
+        if shndx in sections_shndx:
+            # Symbol with associated section
+            sym.section = sections_shndx[shndx]
+            if sym["st_info"]["bind"] in ("STB_GLOBAL", "STB_WEAK"):
+                # Defined global symbol
+                if sym.name in env.known_syms and not sym.name.startswith("__x86.get_pc_thunk."):
+                    dup_errors.append("duplicate symbol: {}".format(sym.name))
+                env.known_syms[sym.name] = sym
+        elif sym.entry["st_shndx"] == "SHN_UNDEF" and sym["st_info"]["bind"] == "STB_GLOBAL":
+            # Undefined global symbol, needs resolving
+            env.unresolved_syms.append(sym)
+    if dup_errors:
+        raise LinkError("\n".join(dup_errors))
 
 
 def link_objects(env, native_qstr_vals_len):
@@ -1188,6 +1202,8 @@ def link_objects(env, native_qstr_vals_len):
             ]
         )
     }
+
+    undef_errors = []
     for sym in env.unresolved_syms:
         assert sym["st_value"] == 0
         if sym.name == "_GLOBAL_OFFSET_TABLE_":
@@ -1200,12 +1216,27 @@ def link_objects(env, native_qstr_vals_len):
             sym.section = env.obj_table_section
         elif sym.name in env.known_syms:
             sym.resolved = env.known_syms[sym.name]
+        elif sym.name in env.externs:
+            # Fixed-address symbols do not need pre-processing.
+            continue
         else:
             if sym.name in fun_table:
                 sym.section = mp_fun_table_sec
                 sym.mp_fun_table_offset = fun_table[sym.name]
             else:
-                raise LinkError("{}: undefined symbol: {}".format(sym.filename, sym.name))
+                undef_errors.append("{}: undefined symbol: {}".format(sym.filename, sym.name))
+
+    for sym in env.externs:
+        if sym in env.known_syms:
+            log(
+                LOG_LEVEL_1,
+                "Symbol {} is a fixed-address symbol at {:08x} and is also provided from an object file".format(
+                    sym, env.externs[sym]
+                ),
+            )
+
+    if undef_errors:
+        raise LinkError("\n".join(undef_errors))
 
     # Align sections, assign their addresses, and create full_text
     env.full_text = bytearray(env.arch.asm_jump(8))  # dummy, to be filled in later
@@ -1446,8 +1477,30 @@ def do_link(args):
     log(LOG_LEVEL_2, "qstr vals: " + ", ".join(native_qstr_vals))
     env = LinkEnv(args.arch)
     try:
-        for file in args.files:
-            load_object_file(env, file)
+        if args.externs:
+            env.externs = parse_linkerscript(args.externs)
+
+        # Load object files
+        for fn in args.files:
+            with open(fn, "rb") as f:
+                load_object_file(env, f, fn)
+
+        if args.libs:
+            # Load archive info
+            archives = []
+            for item in args.libs:
+                archives.extend(ar_util.load_archive(item))
+            # List symbols to look for
+            syms = set(sym.name for sym in env.unresolved_syms)
+            # Resolve symbols from libs
+            lib_objs, _ = ar_util.resolve(archives, syms)
+            # Load extra object files from libs
+            for ar, obj in lib_objs:
+                obj_name = ar.fn + ":" + obj
+                log(LOG_LEVEL_2, "using " + obj_name)
+                with ar.open(obj) as f:
+                    load_object_file(env, f, obj_name)
+
         link_objects(env, len(native_qstr_vals))
         build_mpy(env, env.find_addr("mpy_init"), args.output, native_qstr_vals)
     except LinkError as er:
@@ -1455,10 +1508,54 @@ def do_link(args):
         sys.exit(1)
 
 
+def parse_linkerscript(source):
+    # This extracts fixed-address symbol lists from linkerscripts, only parsing
+    # a small subset of all possible directives.  Right now the only
+    # linkerscript file this is really tested against is the ESP8266's builtin
+    # ROM functions list ($SDK/ld/eagle.rom.addr.v6.ld).
+    #
+    # The parser should be able to handle symbol entries inside ESP-IDF's ROM
+    # symbol lists for the ESP32 range of MCUs as well (see *.ld files in
+    # $SDK/components/esp_rom/<name>/).
+
+    symbols = {}
+
+    LINE_REGEX = re.compile(
+        r"^(?P<weak>PROVIDE\()?"  # optional weak marker start
+        r"(?P<symbol>[a-zA-Z_]\w*)"  # symbol name
+        r"=0x(?P<address>[\da-fA-F]{1,8})*"  # symbol address
+        r"(?(weak)\));$",  # optional weak marker end and line terminator
+        re.ASCII,
+    )
+
+    inside_comment = False
+    for line in (line.strip() for line in source.readlines()):
+        if line.startswith("/*") and not inside_comment:
+            if not line.endswith("*/"):
+                inside_comment = True
+            continue
+        if inside_comment:
+            if line.endswith("*/"):
+                inside_comment = False
+            continue
+        if line.startswith("//"):
+            continue
+        match = LINE_REGEX.match("".join(line.split()))
+        if not match:
+            continue
+        tokens = match.groupdict()
+        symbol = tokens["symbol"]
+        address = int(tokens["address"], 16)
+        if symbol in symbols:
+            raise ValueError(f"Symbol {symbol} already defined")
+        symbols[symbol] = address
+    return symbols
+
+
 def main():
     import argparse
 
-    cmd_parser = argparse.ArgumentParser(description="Run scripts on the pyboard.")
+    cmd_parser = argparse.ArgumentParser(description="Link native object files into a MPY bundle.")
     cmd_parser.add_argument(
         "--verbose", "-v", action="count", default=1, help="increase verbosity"
     )
@@ -1466,7 +1563,17 @@ def main():
     cmd_parser.add_argument("--preprocess", action="store_true", help="preprocess source files")
     cmd_parser.add_argument("--qstrs", default=None, help="file defining additional qstrs")
     cmd_parser.add_argument(
+        "--libs", "-l", dest="libs", action="append", help="static .a libraries to link"
+    )
+    cmd_parser.add_argument(
         "--output", "-o", default=None, help="output .mpy file (default to input with .o->.mpy)"
+    )
+    cmd_parser.add_argument(
+        "--externs",
+        "-e",
+        type=argparse.FileType("rt"),
+        default=None,
+        help="linkerscript providing fixed-address symbols to augment symbol resolution",
     )
     cmd_parser.add_argument("files", nargs="+", help="input files")
     args = cmd_parser.parse_args()

@@ -185,22 +185,8 @@ extern const struct _mp_print_t mp_stderr_print;
 
 // type definitions for the specific machine
 
-#if defined(__MINGW32__) && defined(__LP64__)
-typedef long mp_int_t; // must be pointer size
-typedef unsigned long mp_uint_t; // must be pointer size
-#elif defined(__MINGW32__) && defined(_WIN64)
-#include <stdint.h>
-typedef __int64 mp_int_t;
-typedef unsigned __int64 mp_uint_t;
+#if defined(__MINGW32__) && defined(_WIN64)
 #define MP_SSIZE_MAX __INT64_MAX__
-#elif defined(_MSC_VER) && defined(_WIN64)
-typedef __int64 mp_int_t;
-typedef unsigned __int64 mp_uint_t;
-#else
-// These are definitions for machines where sizeof(int) == sizeof(void*),
-// regardless for actual size.
-typedef int mp_int_t; // must be pointer size
-typedef unsigned int mp_uint_t; // must be pointer size
 #endif
 
 typedef long suseconds_t;
@@ -242,7 +228,7 @@ typedef long mp_off_t;
 
 // CL specific overrides from mpconfig
 
-#define NORETURN                    __declspec(noreturn)
+#define MP_NORETURN                 __declspec(noreturn)
 #define MP_WEAK
 #define MP_NOINLINE                 __declspec(noinline)
 #define MP_ALWAYSINLINE             __forceinline
@@ -264,6 +250,11 @@ typedef long mp_off_t;
 #else
 #define MICROPY_PY_MATH_POW_FIX_NAN (1)
 #endif
+#endif
+
+// VC++ 2017 fixes
+#if (_MSC_VER < 1920)
+#define MICROPY_PY_MATH_COPYSIGN_FIX_NAN (1)
 #endif
 
 // CL specific definitions

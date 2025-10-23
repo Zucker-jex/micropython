@@ -45,6 +45,7 @@
 #include "py/gc.h"
 #include "py/objstr.h"
 #include "py/cstack.h"
+#include "py/mperrno.h"
 #include "py/mphal.h"
 #include "py/mpthread.h"
 #include "extmod/misc.h"
@@ -53,6 +54,7 @@
 #include "extmod/vfs_posix.h"
 #include "genhdr/mpversion.h"
 #include "input.h"
+#include "stack_size.h"
 
 // Command line options, with their defaults
 static bool compile_only = false;
@@ -137,7 +139,7 @@ static int execute_from_lexer(int source_kind, const void *source, mp_parse_inpu
 
         qstr source_name = lex->source_name;
 
-        #if MICROPY_PY___FILE__
+        #if MICROPY_MODULE___FILE__
         if (input_kind == MP_PARSE_FILE_INPUT) {
             mp_store_global(MP_QSTR___file__, MP_OBJ_NEW_QSTR(source_name));
         }
@@ -207,6 +209,9 @@ static int do_repl(void) {
         mp_hal_stdio_mode_raw();
 
     input_restart:
+        // If the GC is locked at this point there is no way out except a reset,
+        // so force the GC to be unlocked to help the user debug what went wrong.
+        MP_STATE_THREAD(gc_lock_depth) = 0;
         vstr_reset(&line);
         int ret = readline(&line, mp_repl_get_ps1());
         mp_parse_input_kind_t parse_input_kind = MP_PARSE_SINGLE_INPUT;
@@ -452,10 +457,13 @@ static void set_sys_argv(char *argv[], int argc, int start_arg) {
 
 #if MICROPY_PY_SYS_EXECUTABLE
 extern mp_obj_str_t mp_sys_executable_obj;
-static char executable_path[MICROPY_ALLOC_PATH_MAX];
+static char *executable_path = NULL;
 
 static void sys_set_excecutable(char *argv0) {
-    if (realpath(argv0, executable_path)) {
+    if (executable_path == NULL) {
+        executable_path = realpath(argv0, NULL);
+    }
+    if (executable_path != NULL) {
         mp_obj_str_set_data(&mp_sys_executable_obj, (byte *)executable_path, strlen(executable_path));
     }
 }
@@ -475,11 +483,7 @@ int main(int argc, char **argv) {
     #endif
 
     // Define a reasonable stack limit to detect stack overflow.
-    mp_uint_t stack_size = 40000 * (sizeof(void *) / 4);
-    #if defined(__arm__) && !defined(__thumb2__)
-    // ARM (non-Thumb) architectures require more stack.
-    stack_size *= 2;
-    #endif
+    mp_uint_t stack_size = 40000 * UNIX_STACK_MULTIPLIER;
 
     // We should capture stack top ASAP after start, and it should be
     // captured guaranteedly before any other stack variables are allocated.
@@ -548,7 +552,14 @@ MP_NOINLINE int main_(int argc, char **argv) {
             MP_OBJ_NEW_QSTR(MP_QSTR__slash_),
         };
         mp_vfs_mount(2, args, (mp_map_t *)&mp_const_empty_map);
+
+        // Make sure the root that was just mounted is the current VFS (it's always at
+        // the end of the linked list).  Can't use chdir('/') because that will change
+        // the current path within the VfsPosix object.
         MP_STATE_VM(vfs_cur) = MP_STATE_VM(vfs_mount_table);
+        while (MP_STATE_VM(vfs_cur)->next != NULL) {
+            MP_STATE_VM(vfs_cur) = MP_STATE_VM(vfs_cur)->next;
+        }
     }
     #endif
 
@@ -605,19 +616,6 @@ MP_NOINLINE int main_(int argc, char **argv) {
     }
     #endif
 
-    // Here is some example code to create a class and instance of that class.
-    // First is the Python, then the C code.
-    //
-    // class TestClass:
-    //     pass
-    // test_obj = TestClass()
-    // test_obj.attr = 42
-    //
-    // mp_obj_t test_class_type, test_class_instance;
-    // test_class_type = mp_obj_new_type(qstr_from_str("TestClass"), mp_const_empty_tuple, mp_obj_new_dict(0));
-    // mp_store_name(qstr_from_str("test_obj"), test_class_instance = mp_call_function_0(test_class_type));
-    // mp_store_attr(test_class_instance, qstr_from_str("attr"), mp_obj_new_int(42));
-
     /*
     printf("bytes:\n");
     printf("    total %d\n", m_get_total_bytes_allocated());
@@ -671,12 +669,18 @@ MP_NOINLINE int main_(int argc, char **argv) {
                 subpkg_tried = false;
 
             reimport:
+                mp_hal_set_interrupt_char(CHAR_CTRL_C);
                 if (nlr_push(&nlr) == 0) {
                     mod = mp_builtin___import__(MP_ARRAY_SIZE(import_args), import_args);
+                    mp_hal_set_interrupt_char(-1);
+                    mp_handle_pending(true);
                     nlr_pop();
                 } else {
                     // uncaught exception
-                    return handle_uncaught_exception(nlr.ret_val) & 0xff;
+                    mp_hal_set_interrupt_char(-1);
+                    mp_handle_pending(false);
+                    ret = handle_uncaught_exception(nlr.ret_val) & 0xff;
+                    break;
                 }
 
                 // If this module is a package, see if it has a `__main__.py`.
@@ -713,11 +717,9 @@ MP_NOINLINE int main_(int argc, char **argv) {
                 return invalid_args();
             }
         } else {
-            char *pathbuf = malloc(PATH_MAX);
-            char *basedir = realpath(argv[a], pathbuf);
+            char *basedir = realpath(argv[a], NULL);
             if (basedir == NULL) {
                 mp_printf(&mp_stderr_print, "%s: can't open file '%s': [Errno %d] %s\n", argv[0], argv[a], errno, strerror(errno));
-                free(pathbuf);
                 // CPython exits with 2 in such case
                 ret = 2;
                 break;
@@ -726,7 +728,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
             // Set base dir of the script as first entry in sys.path.
             char *p = strrchr(basedir, '/');
             mp_obj_list_store(mp_sys_path, MP_OBJ_NEW_SMALL_INT(0), mp_obj_new_str_via_qstr(basedir, p - basedir));
-            free(pathbuf);
+            free(basedir);
 
             set_sys_argv(argv, argc, a);
             ret = do_file(argv[a]);
@@ -766,7 +768,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #endif
 
     #if MICROPY_PY_BLUETOOTH
-    void mp_bluetooth_deinit(void);
+    int mp_bluetooth_deinit(void);
     mp_bluetooth_deinit();
     #endif
 
@@ -792,6 +794,11 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #endif
     #endif
 
+    #if MICROPY_PY_SYS_EXECUTABLE && !defined(NDEBUG)
+    // Again, make memory leak detector happy
+    free(executable_path);
+    #endif
+
     // printf("total bytes = %d\n", m_get_total_bytes_allocated());
     return ret & 0xff;
 }
@@ -803,3 +810,22 @@ void nlr_jump_fail(void *val) {
     fprintf(stderr, "FATAL: uncaught NLR %p\n", val);
     exit(1);
 }
+
+#if MICROPY_VFS_ROM_IOCTL
+
+static uint8_t romfs_buf[4] = { 0xd2, 0xcd, 0x31, 0x00 }; // empty ROMFS
+static const MP_DEFINE_MEMORYVIEW_OBJ(romfs_obj, 'B', 0, sizeof(romfs_buf), romfs_buf);
+
+mp_obj_t mp_vfs_rom_ioctl(size_t n_args, const mp_obj_t *args) {
+    switch (mp_obj_get_int(args[0])) {
+        case MP_VFS_ROM_IOCTL_GET_NUMBER_OF_SEGMENTS:
+            return MP_OBJ_NEW_SMALL_INT(1);
+
+        case MP_VFS_ROM_IOCTL_GET_SEGMENT:
+            return MP_OBJ_FROM_PTR(&romfs_obj);
+    }
+
+    return MP_OBJ_NEW_SMALL_INT(-MP_EINVAL);
+}
+
+#endif

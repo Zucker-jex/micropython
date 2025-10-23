@@ -598,9 +598,7 @@ friendly_repl_reset:
 
         // If the GC is locked at this point there is no way out except a reset,
         // so force the GC to be unlocked to help the user debug what went wrong.
-        if (MP_STATE_THREAD(gc_lock_depth) != 0) {
-            MP_STATE_THREAD(gc_lock_depth) = 0;
-        }
+        MP_STATE_THREAD(gc_lock_depth) = 0;
 
         vstr_reset(&line);
         int ret = readline(&line, mp_repl_get_ps1());
@@ -719,6 +717,11 @@ int pyexec_frozen_module(const char *name, bool allow_keyboard_interrupt) {
     }
 }
 #endif
+
+int pyexec_vstr(vstr_t *str, bool allow_keyboard_interrupt) {
+    mp_uint_t exec_flags = allow_keyboard_interrupt ? 0 : EXEC_FLAG_NO_INTERRUPT;
+    return parse_compile_execute(str, MP_PARSE_FILE_INPUT, exec_flags | EXEC_FLAG_SOURCE_IS_VSTR);
+}
 
 #if MICROPY_REPL_INFO
 mp_obj_t pyb_set_repl_info(mp_obj_t o_value) {
