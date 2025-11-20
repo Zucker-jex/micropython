@@ -22,7 +22,7 @@ MICROPY_VFS_LFS2 = 1
 # PYB-specific frozen modules
 FROZEN_MANIFEST ?= $(BOARD_DIR)/manifest.py
 
-SPI_FLASH_SIZE_MB ?= 32
+SPI_FLASH_SIZE_MB ?= 16
 
 # If SPI flash size is provided via make (SPI_FLASH_SIZE_MB), define the
 # MICROPY_HW_SPIFLASH_SIZE_BYTES macro so the board header can enable
