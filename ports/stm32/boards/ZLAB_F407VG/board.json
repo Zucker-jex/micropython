@@ -1,0 +1,15 @@
+{
+    "deploy": [
+        "../deploy.md"
+    ],
+    "docs": "",
+    "features": [],
+    "images": [
+        "zlab_f407vg.jpg"
+    ],
+    "mcu": "stm32f4",
+    "product": "ZLAB F407VG",
+    "thumbnail": "",
+    "url": "https://blog.zuckertech.cn/",
+    "vendor": "Zucker Technology"
+}

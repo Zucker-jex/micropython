@@ -1,0 +1,15 @@
+{
+    "deploy": [
+        "../deploy.md"
+    ],
+    "docs": "",
+    "features": [],
+    "images": [
+        "zlab_h743ii.jpg"
+    ],
+    "mcu": "stm32h7",
+    "product": "ZLAB H743II",
+    "thumbnail": "",
+    "url": "https://blog.zuckertech.cn/",
+    "vendor": "Zucker Technology"
+}
