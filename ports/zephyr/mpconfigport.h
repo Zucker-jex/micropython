@@ -113,6 +113,26 @@
 #define MICROPY_VFS                 (1)
 #define MICROPY_READER_VFS          (MICROPY_VFS)
 
+#if defined(CONFIG_RISCV_ISA_RV32I) && defined(CONFIG_RISCV_ISA_EXT_M) && defined(CONFIG_RISCV_ISA_EXT_C)
+
+#ifndef MICROPY_EMIT_RV32
+#define MICROPY_EMIT_RV32        (1)
+#endif
+
+#ifndef MICROPY_EMIT_INLINE_RV32
+#define MICROPY_EMIT_INLINE_RV32 (1)
+#endif
+
+#ifdef CONFIG_RISCV_ISA_EXT_ZBA
+#define MICROPY_EMIT_RV32_ZBA (1)
+#endif
+
+#ifdef CONFIG_RISCV_ISA_EXT_ZCMP
+#define MICROPY_EMIT_RV32_ZCMP (1)
+#endif
+
+#endif // CONFIG_RISCV_ISA_RV32I
+
 // fatfs configuration used in ffconf.h
 #define MICROPY_FATFS_ENABLE_LFN       (1)
 #define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
@@ -151,21 +171,20 @@ void mp_hal_signal_event(void);
 #define MICROPY_PY_MACHINE_ADC_READ_UV (1)
 #endif
 
+#if DT_HAS_COMPAT_STATUS_OKAY(micropython_heap)
+#define MICROPY_GC_SPLIT_HEAP (1)
+#endif
+
 typedef long mp_off_t;
 
 #define MP_STATE_PORT MP_STATE_VM
 
 #define MP_SSIZE_MAX (0x7fffffff)
 
-// extra built in names to add to the global namespace
-#define MICROPY_PORT_BUILTINS \
-    { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
-
 #if MICROPY_PY_THREAD
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(bool); \
-        mp_handle_pending(true); \
+        mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_EXCEPTIONS); \
         MP_THREAD_GIL_EXIT(); \
         k_msleep(1); \
         MP_THREAD_GIL_ENTER(); \
@@ -173,8 +192,7 @@ typedef long mp_off_t;
 #else
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(bool); \
-        mp_handle_pending(true); \
+        mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_EXCEPTIONS); \
         k_msleep(1); \
     } while (0);
 #endif
